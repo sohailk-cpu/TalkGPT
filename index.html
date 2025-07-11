@@ -1,0 +1,101 @@
+<!-- TalkGPT: Voice Chat + Text Chat GPT Website -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TalkGPT</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #eee;
+      text-align: center;
+      padding: 40px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+    }
+    input {
+      padding: 10px;
+      width: 300px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    #response {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>TalkGPT 🤖</h1>
+
+  <div>
+    <input type="text" id="prompt" placeholder="Type your question...">
+    <button onclick="sendTextChat()">💬 Ask</button>
+    <button onclick="checkProAccess()">🎤 TalkGPT (Pro)</button>
+  </div>
+
+  <p id="response">Response will appear here</p>
+
+  <script>
+    // --- Text Chat Function ---
+    async function sendTextChat() {
+      const prompt = document.getElementById("prompt").value;
+      const res = await fetch("https://your-backend-api-url.com/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      document.getElementById("response").innerText = "AI: " + data.reply;
+    }
+
+    // --- Premium Check ---
+    function userIsPro() {
+      return localStorage.getItem("proUser") === "yes";
+    }
+
+    function checkProAccess() {
+      if (!userIsPro()) {
+        const confirmPay = confirm("🔒 TalkGPT is a premium feature. Pay ₹49 to unlock?");
+        if (confirmPay) {
+          alert("Payment Successful! (Dummy)");
+          localStorage.setItem("proUser", "yes");
+          startVoiceChat();
+        }
+        return;
+      }
+      startVoiceChat();
+    }
+
+    // --- Voice Chat (Speech to Text + Text to Speech) ---
+    function startVoiceChat() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'en-IN';
+      recognition.start();
+      document.getElementById("response").innerText = "🎙️ Listening...";
+
+      recognition.onresult = async function(event) {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById("prompt").value = transcript;
+        const res = await fetch("https://your-backend-api-url.com/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt: transcript })
+        });
+        const data = await res.json();
+        document.getElementById("response").innerText = "AI: " + data.reply;
+
+        const speak = new SpeechSynthesisUtterance(data.reply);
+        speak.lang = 'en-IN';
+        speechSynthesis.speak(speak);
+      };
+    }
+  </script>
+</body>
+</html>
